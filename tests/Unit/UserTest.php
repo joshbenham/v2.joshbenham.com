@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 uses(RefreshDatabase::class);
 
-it('can be created using factory', function () {
+it('can be created using factory', function (): void {
     $user = User::factory()->create();
 
     expect($user)->toBeInstanceOf(User::class)
@@ -17,7 +17,7 @@ it('can be created using factory', function () {
         ->and($user->email)->toBeString();
 });
 
-it('has fillable attributes', function () {
+it('has fillable attributes', function (): void {
     $user = User::factory()->create([
         'name' => 'John Doe',
         'email' => 'john@example.com',
@@ -29,7 +29,7 @@ it('has fillable attributes', function () {
         ->and($user->password)->not->toBe('secret123'); // Should be hashed
 });
 
-it('hides password and remember_token in array', function () {
+it('hides password and remember_token in array', function (): void {
     $user = User::factory()->create();
 
     $array = $user->toArray();
@@ -38,7 +38,7 @@ it('hides password and remember_token in array', function () {
         ->and($array)->not->toHaveKey('remember_token');
 });
 
-it('casts email_verified_at to datetime', function () {
+it('casts email_verified_at to datetime', function (): void {
     $user = User::factory()->create([
         'email_verified_at' => now(),
     ]);
@@ -46,7 +46,7 @@ it('casts email_verified_at to datetime', function () {
     expect($user->email_verified_at)->toBeInstanceOf(DateTimeInterface::class);
 });
 
-it('hashes password automatically', function () {
+it('hashes password automatically', function (): void {
     $user = User::factory()->create([
         'password' => 'plain-password',
     ]);
@@ -55,31 +55,31 @@ it('hashes password automatically', function () {
         ->and(Hash::check('plain-password', $user->password))->toBeTrue();
 });
 
-it('can be created as unverified', function () {
+it('can be created as unverified', function (): void {
     $user = User::factory()->unverified()->create();
 
     expect($user->email_verified_at)->toBeNull();
 });
 
-it('can be created as verified', function () {
+it('can be created as verified', function (): void {
     $user = User::factory()->create();
 
     expect($user->email_verified_at)->not->toBeNull()
         ->and($user->email_verified_at)->toBeInstanceOf(DateTimeInterface::class);
 });
 
-it('has notifiable trait', function () {
+it('has notifiable trait', function (): void {
     $user = User::factory()->create();
 
     expect(method_exists($user, 'notify'))->toBeTrue()
         ->and(method_exists($user, 'notifyNow'))->toBeTrue();
 });
 
-it('has factory trait', function () {
+it('has factory trait', function (): void {
     expect(User::class)->toHaveMethod('factory');
 });
 
-it('stores email as string', function () {
+it('stores email as string', function (): void {
     $user = User::factory()->create([
         'email' => 'test@example.com',
     ]);
@@ -88,7 +88,7 @@ it('stores email as string', function () {
         ->and($user->email)->toBe('test@example.com');
 });
 
-it('stores name as string', function () {
+it('stores name as string', function (): void {
     $user = User::factory()->create([
         'name' => 'Test User',
     ]);
@@ -97,7 +97,7 @@ it('stores name as string', function () {
         ->and($user->name)->toBe('Test User');
 });
 
-it('can update attributes', function () {
+it('can update attributes', function (): void {
     $user = User::factory()->create([
         'name' => 'Old Name',
     ]);
@@ -107,11 +107,11 @@ it('can update attributes', function () {
     expect($user->fresh()->name)->toBe('New Name');
 });
 
-it('can be deleted', function () {
+it('can be deleted', function (): void {
     $user = User::factory()->create();
     $userId = $user->id;
 
     $user->delete();
 
-    expect(User::find($userId))->toBeNull();
+    expect(User::query()->find($userId))->toBeNull();
 });
