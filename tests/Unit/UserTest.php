@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Filament\Panel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
@@ -130,7 +131,7 @@ it('allows admin to access panel', function (): void {
     config(['app.admin_email' => 'admin@example.com']);
 
     $adminUser = User::factory()->create(['email' => 'admin@example.com']);
-    $panel = Filament\Panel::make();
+    $panel = Panel::make();
 
     expect($adminUser->canAccessPanel($panel))->toBeTrue();
 });
@@ -139,7 +140,7 @@ it('denies non-admin access to panel', function (): void {
     config(['app.admin_email' => 'admin@example.com']);
 
     $regularUser = User::factory()->create(['email' => 'user@example.com']);
-    $panel = Filament\Panel::make();
+    $panel = Panel::make();
 
     expect($regularUser->canAccessPanel($panel))->toBeFalse();
 });
