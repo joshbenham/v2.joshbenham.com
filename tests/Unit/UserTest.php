@@ -115,3 +115,31 @@ it('can be deleted', function (): void {
 
     expect(User::query()->find($userId))->toBeNull();
 });
+
+it('determines if user is admin based on email', function (): void {
+    config(['app.admin_email' => 'admin@example.com']);
+
+    $adminUser = User::factory()->create(['email' => 'admin@example.com']);
+    $regularUser = User::factory()->create(['email' => 'user@example.com']);
+
+    expect($adminUser->isAdmin())->toBeTrue()
+        ->and($regularUser->isAdmin())->toBeFalse();
+});
+
+it('allows admin to access panel', function (): void {
+    config(['app.admin_email' => 'admin@example.com']);
+
+    $adminUser = User::factory()->create(['email' => 'admin@example.com']);
+    $panel = Filament\Panel::make();
+
+    expect($adminUser->canAccessPanel($panel))->toBeTrue();
+});
+
+it('denies non-admin access to panel', function (): void {
+    config(['app.admin_email' => 'admin@example.com']);
+
+    $regularUser = User::factory()->create(['email' => 'user@example.com']);
+    $panel = Filament\Panel::make();
+
+    expect($regularUser->canAccessPanel($panel))->toBeFalse();
+});
