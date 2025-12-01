@@ -11,6 +11,18 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property string $title
+ * @property string $slug
+ * @property string|null $content
+ * @property int $order
+ * @property bool $is_published
+ * @property bool $is_homepage
+ * @property \Illuminate\Support\Carbon|null $published_at
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 #[ObservedBy(PageObserver::class)]
 final class Page extends Model
 {

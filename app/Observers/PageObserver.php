@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\Page;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -32,7 +33,7 @@ final class PageObserver
 
         // Set published_at when page is published but date not set
         if ($page->is_published && $page->published_at === null) {
-            $page->published_at = now();
+            $page->published_at = Carbon::now();
         }
     }
 
@@ -50,7 +51,7 @@ final class PageObserver
 
         // Set published_at when page becomes published but date not set
         if ($page->isDirty('is_published') && $page->is_published && $page->published_at === null) {
-            $page->published_at = now();
+            $page->published_at = Carbon::now();
         }
 
         // Clear published_at when page becomes unpublished

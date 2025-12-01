@@ -217,3 +217,46 @@ it('prevents deleting homepage when it is the only homepage and other pages exis
 
     $homepage->delete();
 })->throws(RuntimeException::class, 'Cannot delete the homepage. Please set another page as homepage first.');
+
+it('automatically sets published_at when creating published page without date', function (): void {
+    $page = Page::create([
+        'title' => 'Published Page',
+        'is_published' => true,
+    ]);
+
+    expect($page->published_at)->not->toBeNull()
+        ->and($page->published_at)->toBeInstanceOf(DateTimeInterface::class);
+});
+
+it('does not override manually set published_at', function (): void {
+    $customDate = now()->subDays(5);
+
+    $page = Page::create([
+        'title' => 'Page with Custom Date',
+        'is_published' => true,
+        'published_at' => $customDate,
+    ]);
+
+    expect($page->published_at->toDateTimeString())->toBe($customDate->toDateTimeString());
+});
+
+it('sets published_at when updating unpublished page to published', function (): void {
+    $page = Page::factory()->unpublished()->create();
+
+    expect($page->published_at)->toBeNull();
+
+    $page->update(['is_published' => true]);
+
+    expect($page->fresh()->published_at)->not->toBeNull()
+        ->and($page->fresh()->published_at)->toBeInstanceOf(DateTimeInterface::class);
+});
+
+it('clears published_at when updating published page to unpublished', function (): void {
+    $page = Page::factory()->published()->create();
+
+    expect($page->published_at)->not->toBeNull();
+
+    $page->update(['is_published' => false]);
+
+    expect($page->fresh()->published_at)->toBeNull();
+});
