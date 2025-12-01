@@ -18,10 +18,10 @@ return new class extends Migration
             $table->string('title');
             $table->string('slug')->unique();
             $table->text('content')->nullable();
+            $table->json('seo')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('is_published')->default(false);
             $table->boolean('is_homepage')->default(false);
-            $table->timestamp('published_at')->nullable();
             $table->timestamps();
         });
     }

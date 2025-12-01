@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\Page;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -22,18 +21,13 @@ final class PageObserver
 
         if (! isset($page->order)) {
             /** @var int|null $maxOrder */
-            $maxOrder = Page::max('order');
+            $maxOrder = Page::query()->max('order');
             $page->order = ($maxOrder ?? 0) + 1;
         }
 
         // If this is the first page, make it the homepage
         if (! isset($page->is_homepage)) {
-            $page->is_homepage = Page::count() === 0;
-        }
-
-        // Set published_at when page is published but date not set
-        if ($page->is_published && $page->published_at === null) {
-            $page->published_at = Carbon::now();
+            $page->is_homepage = Page::query()->count() === 0;
         }
     }
 
@@ -43,21 +37,7 @@ final class PageObserver
     public function updating(Page $page): void
     {
         // Prevent removing homepage status if it's the only page
-        if ($page->isDirty('is_homepage') && $page->is_homepage === false) {
-            if (Page::where('is_homepage', true)->count() === 1) {
-                throw new RuntimeException('At least one page must be marked as the homepage.');
-            }
-        }
-
-        // Set published_at when page becomes published but date not set
-        if ($page->isDirty('is_published') && $page->is_published && $page->published_at === null) {
-            $page->published_at = Carbon::now();
-        }
-
-        // Clear published_at when page becomes unpublished
-        if ($page->isDirty('is_published') && ! $page->is_published) {
-            $page->published_at = null;
-        }
+        throw_if($page->isDirty('is_homepage') && $page->is_homepage === false && Page::query()->where('is_homepage', true)->count() === 1, RuntimeException::class, 'At least one page must be marked as the homepage.');
     }
 
     /**
@@ -66,8 +46,6 @@ final class PageObserver
     public function deleting(Page $page): void
     {
         // Prevent deleting the homepage if it's the only page
-        if ($page->is_homepage && Page::where('is_homepage', true)->count() === 1 && Page::count() > 1) {
-            throw new RuntimeException('Cannot delete the homepage. Please set another page as homepage first.');
-        }
+        throw_if($page->is_homepage && Page::query()->where('is_homepage', true)->count() === 1 && Page::query()->count() > 1, RuntimeException::class, 'Cannot delete the homepage. Please set another page as homepage first.');
     }
 }

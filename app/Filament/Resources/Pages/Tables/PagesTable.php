@@ -48,12 +48,6 @@ final class PagesTable
                     ->boolean()
                     ->sortable(),
 
-                TextColumn::make('published_at')
-                    ->label('Publish Date')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(),
-
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
@@ -83,7 +77,7 @@ final class PagesTable
                     ->modalHeading('Set as Homepage')
                     ->modalDescription('Are you sure you want to set this page as the homepage?')
                     ->action(fn (Page $record) => $record->setAsHomepage())
-                    ->visible(fn (Page $record) => ! $record->is_homepage)
+                    ->visible(fn (Page $record): bool => ! $record->is_homepage)
                     ->successNotificationTitle('Homepage updated'),
                 EditAction::make(),
             ])

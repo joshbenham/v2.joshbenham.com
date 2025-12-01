@@ -29,7 +29,6 @@ final class PageFactory extends Factory
             'order' => fake()->numberBetween(0, 100),
             'is_published' => fake()->boolean(70),
             'is_homepage' => false,
-            'published_at' => fake()->boolean(70) ? now() : null,
         ];
     }
 
@@ -40,7 +39,6 @@ final class PageFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_published' => true,
-            'published_at' => now(),
         ]);
     }
 
@@ -51,7 +49,6 @@ final class PageFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_published' => false,
-            'published_at' => null,
         ]);
     }
 
@@ -62,6 +59,22 @@ final class PageFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'is_homepage' => true,
+        ]);
+    }
+
+    /**
+     * Indicate that the page should have SEO data.
+     */
+    public function withSeo(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'seo' => [
+                'meta_title' => fake()->sentence(6),
+                'meta_description' => fake()->sentence(20),
+                'og_title' => fake()->sentence(6),
+                'og_description' => fake()->sentence(15),
+                'schema_type' => 'WebPage',
+            ],
         ]);
     }
 }

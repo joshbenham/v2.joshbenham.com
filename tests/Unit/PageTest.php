@@ -24,15 +24,13 @@ it('has fillable attributes', function (): void {
         'content' => 'Test content',
         'order' => 10,
         'is_published' => true,
-        'published_at' => now(),
     ]);
 
     expect($page->title)->toBe('Test Page')
         ->and($page->slug)->toBe('test-page')
         ->and($page->content)->toBe('Test content')
         ->and($page->order)->toBe(10)
-        ->and($page->is_published)->toBeTrue()
-        ->and($page->published_at)->toBeInstanceOf(DateTimeInterface::class);
+        ->and($page->is_published)->toBeTrue();
 });
 
 it('casts is_published to boolean', function (): void {
@@ -42,14 +40,6 @@ it('casts is_published to boolean', function (): void {
 
     expect($page->is_published)->toBeBool()
         ->and($page->is_published)->toBeTrue();
-});
-
-it('casts published_at to datetime', function (): void {
-    $page = Page::factory()->create([
-        'published_at' => now(),
-    ]);
-
-    expect($page->published_at)->toBeInstanceOf(DateTimeInterface::class);
 });
 
 it('automatically generates slug from title on creation', function (): void {
@@ -73,15 +63,13 @@ it('does not override manually set slug', function (): void {
 it('can be created as published', function (): void {
     $page = Page::factory()->published()->create();
 
-    expect($page->is_published)->toBeTrue()
-        ->and($page->published_at)->not->toBeNull();
+    expect($page->is_published)->toBeTrue();
 });
 
 it('can be created as unpublished', function (): void {
     $page = Page::factory()->unpublished()->create();
 
-    expect($page->is_published)->toBeFalse()
-        ->and($page->published_at)->toBeNull();
+    expect($page->is_published)->toBeFalse();
 });
 
 it('can update attributes', function (): void {
@@ -146,7 +134,7 @@ it('automatically sets order to max + 1 on creation', function (): void {
     Page::factory()->create(['order' => 5]);
     Page::factory()->create(['order' => 10]);
 
-    $newPage = Page::create([
+    $newPage = Page::query()->create([
         'title' => 'New Page',
         'is_published' => false,
     ]);
@@ -155,7 +143,7 @@ it('automatically sets order to max + 1 on creation', function (): void {
 });
 
 it('sets order to 1 when no pages exist', function (): void {
-    $firstPage = Page::create([
+    $firstPage = Page::query()->create([
         'title' => 'First Page',
         'is_published' => false,
     ]);
@@ -164,7 +152,7 @@ it('sets order to 1 when no pages exist', function (): void {
 });
 
 it('automatically marks first page as homepage', function (): void {
-    $firstPage = Page::create([
+    $firstPage = Page::query()->create([
         'title' => 'First Page',
         'is_published' => false,
     ]);
@@ -175,7 +163,7 @@ it('automatically marks first page as homepage', function (): void {
 it('does not mark subsequent pages as homepage', function (): void {
     Page::factory()->create(); // First page (will be homepage)
 
-    $secondPage = Page::create([
+    $secondPage = Page::query()->create([
         'title' => 'Second Page',
         'is_published' => false,
     ]);
@@ -218,45 +206,81 @@ it('prevents deleting homepage when it is the only homepage and other pages exis
     $homepage->delete();
 })->throws(RuntimeException::class, 'Cannot delete the homepage. Please set another page as homepage first.');
 
-it('automatically sets published_at when creating published page without date', function (): void {
-    $page = Page::create([
-        'title' => 'Published Page',
-        'is_published' => true,
+it('casts seo to array', function (): void {
+    $page = Page::factory()->create();
+
+    expect($page->seo)->toBeNull();
+});
+
+it('can store and retrieve seo data', function (): void {
+    $seoData = [
+        'meta_title' => 'Custom Meta Title',
+        'meta_description' => 'Custom meta description for SEO',
+        'og_title' => 'Custom OG Title',
+        'schema_type' => 'Article',
+    ];
+
+    $page = Page::factory()->create(['seo' => $seoData]);
+
+    expect($page->fresh()->seo)
+        ->toBeArray()
+        ->and($page->fresh()->seo['meta_title'])->toBe('Custom Meta Title')
+        ->and($page->fresh()->seo['meta_description'])->toBe('Custom meta description for SEO')
+        ->and($page->fresh()->seo['og_title'])->toBe('Custom OG Title')
+        ->and($page->fresh()->seo['schema_type'])->toBe('Article');
+});
+
+it('can create page with seo using factory', function (): void {
+    $page = Page::factory()->withSeo()->create();
+
+    expect($page->seo)->toBeArray()
+        ->and($page->seo['meta_title'])->not->toBeNull()
+        ->and($page->seo['meta_description'])->not->toBeNull()
+        ->and($page->seo['schema_type'])->toBe('WebPage');
+});
+
+it('can update seo data using array', function (): void {
+    $page = Page::factory()->create();
+
+    $page->update([
+        'seo' => [
+            'meta_title' => 'Updated Title',
+            'og_description' => 'Updated OG Description',
+        ],
     ]);
 
-    expect($page->published_at)->not->toBeNull()
-        ->and($page->published_at)->toBeInstanceOf(DateTimeInterface::class);
+    expect($page->fresh()->seo['meta_title'])->toBe('Updated Title')
+        ->and($page->fresh()->seo['og_description'])->toBe('Updated OG Description');
 });
 
-it('does not override manually set published_at', function (): void {
-    $customDate = now()->subDays(5);
+it('generates schema json when schema type is set', function (): void {
+    $seoData = [
+        'schema_type' => 'Article',
+        'schema_data' => ['headline' => 'Test Article'],
+    ];
 
-    $page = Page::create([
-        'title' => 'Page with Custom Date',
-        'is_published' => true,
-        'published_at' => $customDate,
+    $page = Page::factory()->create([
+        'title' => 'Test Page',
+        'slug' => 'test-page',
+        'seo' => $seoData,
     ]);
 
-    expect($page->published_at->toDateTimeString())->toBe($customDate->toDateTimeString());
+    $schemaData = $page->seo;
+    expect($schemaData)->toBeArray()
+        ->and($schemaData['schema_type'])->toBe('Article')
+        ->and($schemaData['schema_data']['headline'])->toBe('Test Article');
 });
 
-it('sets published_at when updating unpublished page to published', function (): void {
-    $page = Page::factory()->unpublished()->create();
+it('returns null seo when not set', function (): void {
+    $page = Page::factory()->create();
 
-    expect($page->published_at)->toBeNull();
-
-    $page->update(['is_published' => true]);
-
-    expect($page->fresh()->published_at)->not->toBeNull()
-        ->and($page->fresh()->published_at)->toBeInstanceOf(DateTimeInterface::class);
+    expect($page->seo)->toBeNull();
 });
 
-it('clears published_at when updating published page to unpublished', function (): void {
-    $page = Page::factory()->published()->create();
+it('checks if seo data is empty', function (): void {
+    $pageWithoutSeo = Page::factory()->create();
+    $pageWithSeo = Page::factory()->create(['seo' => ['meta_title' => 'Test']]);
 
-    expect($page->published_at)->not->toBeNull();
-
-    $page->update(['is_published' => false]);
-
-    expect($page->fresh()->published_at)->toBeNull();
+    expect($pageWithoutSeo->seo)->toBeNull()
+        ->and($pageWithSeo->seo)->not->toBeNull();
 });
