@@ -82,7 +82,7 @@
                     <h2 class="text-5xl font-bold mb-4">{{ $page->title }}</h2>
                     <p class="text-xl opacity-90">Welcome to our homepage</p>
                 </div>
-                
+
                 <div class="px-8 py-12">
                     <article class="prose prose-lg max-w-none">
                         {!! $page->content !!}
@@ -94,7 +94,7 @@
             @php
                 $pages = \App\Models\Page::query()->published()->ordered()->get()->filter(fn($p) => !$p->is_homepage);
             @endphp
-            
+
             @if($pages->isNotEmpty())
                 <div class="mt-12">
                     <h3 class="text-2xl font-bold text-gray-900 mb-6 text-center">Explore More</h3>

@@ -205,3 +205,37 @@ it('uses custom home view when homepage has slug home', function (): void {
         ->assertSee('Welcome Home')
         ->assertSee('Homepage content here.');
 });
+
+it('displays custom 404 page for non-existent routes', function (): void {
+    Page::factory()->create(['is_homepage' => true, 'is_published' => true]);
+
+    $response = $this->get('/this-page-does-not-exist');
+
+    $response->assertNotFound()
+        ->assertSee('404')
+        ->assertSee('Page Not Found')
+        ->assertSee('Go Home');
+});
+
+it('displays custom 404 page with navigation to available pages', function (): void {
+    Page::factory()->create(['is_homepage' => true, 'is_published' => true]);
+
+    Page::factory()->create([
+        'title' => 'About Us',
+        'slug' => 'about',
+        'is_published' => true,
+    ]);
+
+    Page::factory()->create([
+        'title' => 'Contact',
+        'slug' => 'contact',
+        'is_published' => true,
+    ]);
+
+    $response = $this->get('/non-existent-page');
+
+    $response->assertNotFound()
+        ->assertSee('About Us')
+        ->assertSee('Contact')
+        ->assertSee('Or explore these pages');
+});
