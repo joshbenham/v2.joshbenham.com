@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Observers;
 
 use App\Models\Page;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 final class PageObserver
 {
@@ -34,18 +34,38 @@ final class PageObserver
     /**
      * Handle the Page "updating" event.
      */
-    public function updating(Page $page): void
+    public function updating(Page $page): bool
     {
         // Prevent removing homepage status if it's the only page
-        throw_if($page->isDirty('is_homepage') && $page->is_homepage === false && Page::query()->where('is_homepage', true)->count() === 1, RuntimeException::class, 'At least one page must be marked as the homepage.');
+        if ($page->isDirty('is_homepage') && $page->is_homepage === false && Page::query()->where('is_homepage', true)->count() === 1) {
+            Notification::make()
+                ->danger()
+                ->title('Cannot remove homepage status')
+                ->body('At least one page must be marked as the homepage.')
+                ->send();
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Handle the Page "deleting" event.
      */
-    public function deleting(Page $page): void
+    public function deleting(Page $page): bool
     {
         // Prevent deleting the homepage if it's the only page
-        throw_if($page->is_homepage && Page::query()->where('is_homepage', true)->count() === 1 && Page::query()->count() > 1, RuntimeException::class, 'Cannot delete the homepage. Please set another page as homepage first.');
+        if ($page->is_homepage && Page::query()->where('is_homepage', true)->count() === 1 && Page::query()->count() > 1) {
+            Notification::make()
+                ->danger()
+                ->title('Cannot delete homepage')
+                ->body('Cannot delete the homepage. Please set another page as homepage first.')
+                ->send();
+
+            return false;
+        }
+
+        return true;
     }
 }

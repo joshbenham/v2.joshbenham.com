@@ -196,15 +196,21 @@ it('prevents removing homepage status when only one homepage exists', function (
     Page::factory()->create(['is_homepage' => false]);
 
     $page->is_homepage = false;
-    $page->save();
-})->throws(RuntimeException::class, 'At least one page must be marked as the homepage.');
+    $result = $page->save();
+
+    expect($result)->toBeFalse()
+        ->and($page->fresh()->is_homepage)->toBeTrue();
+});
 
 it('prevents deleting homepage when it is the only homepage and other pages exist', function (): void {
     $homepage = Page::factory()->create(['is_homepage' => true]);
     Page::factory()->create(['is_homepage' => false]);
 
-    $homepage->delete();
-})->throws(RuntimeException::class, 'Cannot delete the homepage. Please set another page as homepage first.');
+    $result = $homepage->delete();
+
+    expect($result)->toBeFalse()
+        ->and(Page::query()->find($homepage->id))->not->toBeNull();
+});
 
 it('casts seo to array', function (): void {
     $page = Page::factory()->create();
